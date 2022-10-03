@@ -11,7 +11,7 @@ def hi(message):
     global user_name
     user_name = message.from_user.first_name
 
-    bot.send_message(message.chat.id, 'Привет, ' + user_name + '! Давай знакомиться! Скажите, кто вы:', reply_markup=button_start())
+    bot.send_message(message.chat.id, 'Привет, ' + user_name + '! Давайте знакомиться! Скажите, кто вы:', reply_markup=button_start())
 
 
 @bot.message_handler(content_types=['text'])
