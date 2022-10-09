@@ -29,3 +29,20 @@ def button_admin_start():
     btn1 = types.KeyboardButton('Отправить новость')
     markup.add(btn1)
     return markup
+
+def button_return():
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    btn1 = types.KeyboardButton('Назад')
+    markup.add(btn1)
+    return markup
+
+def who_reply():
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    btn1 = types.KeyboardButton('Гостям школы')
+    btn2 = types.KeyboardButton('Ученикам')
+    btn3 = types.KeyboardButton('Учителям')
+    btn4 = types.KeyboardButton('Родителям')
+    btn5 = types.KeyboardButton('Назад')
+
+    markup.add(btn1, btn2, btn3, btn4, btn5)
+    return markup
