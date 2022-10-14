@@ -14,7 +14,6 @@ cur.execute("""CREATE TABLE IF NOT EXISTS user(
 conn.commit()
 
 
-
 cur.execute("SELECT * FROM user;")
 res = cur.fetchall()
 conn.commit()

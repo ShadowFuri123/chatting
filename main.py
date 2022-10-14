@@ -62,26 +62,27 @@ def who_are_you(message):
     if message.text == 'Назад' :
         main_window()
 
-    if message.text == 'Отправить новость' and id == teacher_id:
-        to_whom_send_news()
+    for i in teacher_id_from_data():
+        if message.text == 'Отправить новость' and id == i:
+            to_whom_send_news()
 
 
-    if message.text == 'Ученикам' and id == teacher_id:
-        mess = bot.send_message(id, 'Ученикам какого класса вы хотите написать? Пожалуйста, пишите номер и букву класса слитно')
-        bot.register_next_step_handler(mess, clas)
+        if message.text == 'Ученикам' and id == i:
+            mess = bot.send_message(id, 'Ученикам какого класса вы хотите написать? Пожалуйста, пишите номер и букву класса слитно')
+            bot.register_next_step_handler(mess, clas)
 
 
-    if message.text == 'Родителям' and id == teacher_id:
-        mess = bot.send_message(id, 'Родителям учеников какого класса вы хотите написать? Пожалуйста, пишите номер и букву класса слитно')
-        bot.register_next_step_handler(mess, clas_p)
+        if message.text == 'Родителям' and id == i:
+            mess = bot.send_message(id, 'Родителям учеников какого класса вы хотите написать? Пожалуйста, пишите номер и букву класса слитно')
+            bot.register_next_step_handler(mess, clas_p)
 
-    if message.text == 'Гостям школы' and id == teacher_id:
-        to_whom = ('Гостям школы', 'none')
-        send_news(to_whom)
+        if message.text == 'Гостям школы' and id == i:
+            to_whom = ('Гостям школы', 'none')
+            send_news(to_whom)
 
-    if message.text == 'Учителям' and id == teacher_id:
-        to_whom =('Учителям', 'none')
-        send_news(to_whom)
+        if message.text == 'Учителям' and id == i:
+            to_whom =('Учителям', 'none')
+            send_news(to_whom)
 
 
 def student():
@@ -116,6 +117,11 @@ def insert_base(user):
     conn.commit()
     bot.send_message(id, 'Спасибо! Желаете ли Вы подписаться на рассылку?', reply_markup=button_reply_on())
 
+def insert_base_teacher(user):
+    cur.execute("INSERT OR IGNORE INTO user(userid, status, reply, user_name, clas) VALUES(?, ?, ?, ?, ?);", user)
+    conn.commit()
+
+
 def main_window():
     bot.send_message(id, 'Выберите действие:', reply_markup=button_reply_on())
 
@@ -124,7 +130,8 @@ def parols(message):
 
         if message.text == password and message.text != 'Назад':
             bot.send_message(message.chat.id, 'Поздравляю! Вы успешно вошли в аккаунт')
-            administrator()
+            mess = bot.send_message(id, 'Пожалуйста, назовите свою Фамилию и Имя. Они будут использоваться при отправке новостей' )
+            bot.register_next_step_handler(mess, name_user)
         elif message.text == 'Назад':
             return_to_who_are_you()
         else:
@@ -132,13 +139,26 @@ def parols(message):
             mess = bot.send_message(message.chat.id, 'Пожалуйста, введите пароль:')
             bot.register_next_step_handler(mess, parols)
 
+def name_user(message):
+    user_names = message.text
+    administrator(user_names)
 
-
-def administrator():
+def administrator(user_names):
     global teacher_id
-    teacher_id = id
+    teacher_id = teacher_id_from_data()
     bot.send_message(id, 'Выберете действие:', reply_markup=button_admin_start())
-    user = (id, 'teacher', 'off', user_name, 'none')
+    user = (id, 'teacher', 'off', user_names, 'none')
+    insert_base_teacher(user)
+
+def teacher_id_from_data():
+    cur.execute("""SELECT userid, status FROM user""")
+    data = cur.fetchall()
+    conn.commit()
+    teacher_id1 = []
+    for name in data:
+        if name[1] == 'teacher':
+            teacher_id1.append(name[0])
+    return teacher_id1
 
 
 def to_whom_send_news():
@@ -167,12 +187,17 @@ def reply(message, to_whom):
     data = cur.fetchall()
     conn.commit()
     news = message.text
-    for replys in data:
-        if replys[3] == 'on':
-            if to_whom[0] == replys[1] and to_whom[1] == replys[4]:
-                print(news)
-                bot.send_message(replys[0], f'Здравствуйте, {replys[2]}. Доступна новая новость')
-                bot.send_message(replys[0], news)
+    try:
+        for replys in data:
+            if replys[3] == 'on':
+                if to_whom[0] == replys[1] and to_whom[1] == replys[4]:
+                    print(news)
+                    bot.send_message(replys[0], f'Здравствуйте, {replys[2]}. Доступна новая новость')
+                    bot.send_message(replys[0], news)
+        bot.send_message(id, 'Сообщение успешно отправлено')
+    except:
+        bot.send_message(id, 'Возникла ошибка при отправке сообщения. Пожалуйста, свяжитесь с администратором')
+
 
 @bot.message_handler(commands=['stop'])
 def stop_bot():
