@@ -42,7 +42,8 @@ def who_reply():
     btn2 = types.KeyboardButton('Ученикам')
     btn3 = types.KeyboardButton('Учителям')
     btn4 = types.KeyboardButton('Родителям')
-    btn5 = types.KeyboardButton('Назад')
+    btn5 = types.KeyboardButton('Всем')
+    btn6 = types.KeyboardButton('Назад')
 
-    markup.add(btn1, btn2, btn3, btn4, btn5)
+    markup.add(btn1, btn2, btn3, btn4, btn5, btn6)
     return markup

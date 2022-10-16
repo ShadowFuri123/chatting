@@ -2,7 +2,6 @@ import telebot
 from config import API, password, programmist
 from data_base import cur, conn
 from button import *
-from insert_data_base import *
 
 bot = telebot.TeleBot(API)
 global to_whom
@@ -35,9 +34,15 @@ def who_are_you(message):
         parent()
 
     if message.text == 'Учитель':
-        mess = bot.send_message(id, 'Пожалуйста, введите пароль:', reply_markup=button_return())
-        bot.register_next_step_handler(mess, parols)
-
+        for x in teacher_id_from_data():
+            print(x)
+            if id == x:
+                bot.send_message(id, 'С Возвращением!')
+                return_teacher()
+                break
+            else:
+                mess = bot.send_message(id, 'Пожалуйста, введите пароль:', reply_markup=button_return())
+                bot.register_next_step_handler(mess, parols)
 
     if message.text == 'Подписаться на рассылку':
         markup1 = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -77,11 +82,15 @@ def who_are_you(message):
             bot.register_next_step_handler(mess, clas_p)
 
         if message.text == 'Гостям школы' and id == i:
-            to_whom = ('Гостям школы', 'none')
+            to_whom = ('guest', 'none')
             send_news(to_whom)
 
         if message.text == 'Учителям' and id == i:
-            to_whom =('Учителям', 'none')
+            to_whom =('teacher', 'none')
+            send_news(to_whom)
+
+        if message.text == 'Всем' and id == i:
+            to_whom = ('all', 'none')
             send_news(to_whom)
 
 
@@ -112,6 +121,9 @@ def class_parent(message):
     user = (id, 'parent', 'off', user_name, class_student)
     insert_base(user)
 
+
+
+
 def insert_base(user):
     cur.execute("INSERT OR IGNORE INTO user(userid, status, reply, user_name, clas) VALUES(?, ?, ?, ?, ?);", user)
     conn.commit()
@@ -122,12 +134,16 @@ def insert_base_teacher(user):
     conn.commit()
 
 
+
+
+
 def main_window():
     bot.send_message(id, 'Выберите действие:', reply_markup=button_reply_on())
 
 
-def parols(message):
 
+def parols(message):
+    try:
         if message.text == password and message.text != 'Назад':
             bot.send_message(message.chat.id, 'Поздравляю! Вы успешно вошли в аккаунт')
             mess = bot.send_message(id, 'Пожалуйста, назовите свою Фамилию и Имя. Они будут использоваться при отправке новостей' )
@@ -138,6 +154,11 @@ def parols(message):
             bot.send_message(id, 'Пароль неверный. Повторите попытку')
             mess = bot.send_message(message.chat.id, 'Пожалуйста, введите пароль:')
             bot.register_next_step_handler(mess, parols)
+    except:
+        bot.send_message(id, 'Возникла ошибка. Пожалуйста, сообщите об этом администратору')
+
+
+
 
 def name_user(message):
     user_names = message.text
@@ -150,6 +171,10 @@ def administrator(user_names):
     user = (id, 'teacher', 'off', user_names, 'none')
     insert_base_teacher(user)
 
+def return_teacher():
+    bot.send_message(id, 'Выберете действие:', reply_markup=button_admin_start())
+
+
 def teacher_id_from_data():
     cur.execute("""SELECT userid, status FROM user""")
     data = cur.fetchall()
@@ -159,6 +184,8 @@ def teacher_id_from_data():
         if name[1] == 'teacher':
             teacher_id1.append(name[0])
     return teacher_id1
+
+
 
 
 def to_whom_send_news():
@@ -179,8 +206,6 @@ def send_news(to_whom):
     reply_message = bot.send_message(id, 'Пожалуйста, напишите новость одним сообщением')
     bot.register_next_step_handler(reply_message, reply, to_whom)
 
-
-
 def reply(message, to_whom):
     sqlite_select_query = """SELECT userid, status, user_name, reply, clas from user """
     cur.execute(sqlite_select_query)
@@ -193,6 +218,8 @@ def reply(message, to_whom):
                 if to_whom[0] == replys[1] and to_whom[1] == replys[4]:
                     print(news)
                     bot.send_message(replys[0], f'Здравствуйте, {replys[2]}. Доступна новая новость')
+                    bot.send_message(replys[0], news)
+                elif to_whom[0] == 'all':
                     bot.send_message(replys[0], news)
         bot.send_message(id, 'Сообщение успешно отправлено')
     except:
