@@ -1,18 +1,21 @@
 import telebot
-from config import API, password, programmist
+from config import API, password
 from data_base import cur, conn
 from button import *
 
 bot = telebot.TeleBot(API)
 global to_whom
 
+f = open('Hi.png', 'rb')
 
 @bot.message_handler(commands=['start'])
 def hi(message):
     global user_name
     user_name = message.from_user.first_name
 
-    bot.send_message(message.chat.id, 'Здравствуйте, ' + user_name + '! Давайте знакомиться! Скажите, кто Вы:', reply_markup=button_start())
+    bot.send_message(message.chat.id, 'Здравствуйте, ' + user_name + '! Я - Фоксель!')
+    bot.send_photo(message.chat.id, f)
+    bot.send_message(message.chat.id, 'Скажите, кто Вы:', reply_markup=button_start())
 
 def return_to_who_are_you():
     bot.send_message(id, 'Скажите, кто Вы:', reply_markup=button_start())
@@ -34,15 +37,18 @@ def who_are_you(message):
         parent()
 
     if message.text == 'Учитель':
+        teacher = False
         for x in teacher_id_from_data():
             print(x)
             if id == x:
-                bot.send_message(id, 'С Возвращением!')
-                return_teacher()
-                break
-            else:
-                mess = bot.send_message(id, 'Пожалуйста, введите пароль:', reply_markup=button_return())
-                bot.register_next_step_handler(mess, parols)
+                teacher = True
+
+        if teacher == True:
+            bot.send_message(id, 'С Возвращением!')
+            return_teacher()
+        else:
+         mess = bot.send_message(id, 'Пожалуйста, введите пароль:', reply_markup=button_return())
+         bot.register_next_step_handler(mess, parols)
 
     if message.text == 'Подписаться на рассылку':
         markup1 = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -231,4 +237,3 @@ def stop_bot():
     bot.send_message(id, hi())
 
 bot.infinity_polling()
-
