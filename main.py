@@ -173,7 +173,7 @@ def name_user(message):
 def administrator(user_names):
     global teacher_id
     teacher_id = teacher_id_from_data()
-    bot.send_message(id, 'Выберете действие:', reply_markup=button_admin_start())
+    bot.send_message(id, '__Выберете действие__:', parse_mode="Markdown", reply_markup=button_admin_start())
     user = (id, 'teacher', 'off', user_names, 'none')
     insert_base_teacher(user)
 
@@ -237,3 +237,4 @@ def stop_bot():
     bot.send_message(id, hi())
 
 bot.infinity_polling()
+#https://qna.habr.com/q/628376
