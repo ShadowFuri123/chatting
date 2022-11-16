@@ -3,18 +3,21 @@ from config import API, password
 from data_base import cur, conn
 from button import *
 
-bot = telebot.TeleBot(API)
-global to_whom
 
-f = open('Hi.png', 'rb')
+bot = telebot.TeleBot(API)
+
+
 
 @bot.message_handler(commands=['start'])
 def hi(message):
     global user_name
+    global id
+
+    id = message.chat.id
     user_name = message.from_user.first_name
 
     bot.send_message(message.chat.id, 'Здравствуйте, ' + user_name + '! Я - Фоксель!')
-    bot.send_photo(message.chat.id, f)
+    bot.send_photo(message.chat.id, open('Hi.png', 'rb'))
     bot.send_message(message.chat.id, 'Скажите, кто Вы:', reply_markup=button_start())
 
 def return_to_who_are_you():
@@ -22,82 +25,95 @@ def return_to_who_are_you():
 
 
 @bot.message_handler(content_types=['text'])
-def who_are_you(message):
-    global id
-    id = message.chat.id
+def work_with_text(message):
+        global id
+        id = message.chat.id
 
+        if message.text == 'Ученик':
+            return student()
 
-    if message.text == 'Ученик':
-        student()
+        if message.text == 'Гость':
+            guest()
 
-    if message.text == 'Гость':
-        guest()
+        if message.text == 'Родитель':
+            parent()
 
-    if message.text == 'Родитель':
-        parent()
+        if message.text == 'Учитель':
+            teacher = False
+            for x in teacher_id_from_data():
+                if id == x:
+                    teacher = True
 
-    if message.text == 'Учитель':
-        teacher = False
-        for x in teacher_id_from_data():
-            print(x)
-            if id == x:
-                teacher = True
+            if teacher == True:
+                bot.send_message(id, 'С Возвращением!')
+                return_teacher()
+            else:
+                mess = bot.send_message(id, 'Пожалуйста, введите пароль:', reply_markup=button_return())
+                bot.register_next_step_handler(mess, parols)
 
-        if teacher == True:
-            bot.send_message(id, 'С Возвращением!')
-            return_teacher()
-        else:
-         mess = bot.send_message(id, 'Пожалуйста, введите пароль:', reply_markup=button_return())
-         bot.register_next_step_handler(mess, parols)
+        if message.text == 'Подписаться на рассылку':
+            try:
+                cur.execute("UPDATE user set reply = ? where userid = ?", ('on', id))
+                conn.commit()
+                bot.send_message(id, 'Вы успешно подписались на рассылку', reply_markup=button_reply_off())
+            except:
+                bot.send_message(id, 'Вы уже подписаны на рассылку или возникла ошибка')
 
-    if message.text == 'Подписаться на рассылку':
-        markup1 = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        btn1 = types.KeyboardButton('Получить последнюю новость')
-        markup1.add(btn1)
-        try:
-            cur.execute("UPDATE user set reply = ? where userid = ?", ('on', id))
-            conn.commit()
-            bot.send_message(id, 'Вы успешно подписались на рассылку', reply_markup=button_reply_off())
-        except:
-            bot.send_message(id, 'Вы уже подписаны на рассылку или возникла ошибка')
+        if message.text == 'Отписаться от рассылки':
+            try:
+                cur.execute("UPDATE user set reply = ? where userid = ?", ('off', id))
+                conn.commit()
+                bot.send_message(id, ' Вы успешно отписались от рассылки', reply_markup=button_reply_off())
+            except:
+                bot.send_message(id, 'Возникла ошибка при отписке')
 
-    if message.text == 'Отписаться от рассылки':
-        try:
-            cur.execute("UPDATE user set reply = ? where userid = ?", ('off', id))
-            conn.commit()
-            bot.send_message(id, ' Вы успешно отписались от рассылки', reply_markup=button_reply_off())
-        except:
-            bot.send_message(id, 'Возникла ошибка при отписке')
+        if message.text == 'Назад':
+            main_window()
 
+        if message.text == 'Узнать расписание':
+            bot.send_photo(id, open('image.jpg', 'rb'))
 
-    if message.text == 'Назад' :
-        main_window()
+        for i in teacher_id_from_data():
+            if message.text == 'Отправить новость' and id == i:
+                to_whom_send_news()
 
-    for i in teacher_id_from_data():
-        if message.text == 'Отправить новость' and id == i:
-            to_whom_send_news()
+            if message.text == 'Ученикам' and id == i:
+                mess = bot.send_message(id,
+                                        'Ученикам какого класса вы хотите написать? Пожалуйста, пишите номер и букву класса слитно')
+                bot.register_next_step_handler(mess, clas)
 
+            if message.text == 'Родителям' and id == i:
+                mess = bot.send_message(id,
+                                        'Родителям учеников какого класса вы хотите написать? Пожалуйста, пишите номер и букву класса слитно')
+                bot.register_next_step_handler(mess, clas_p)
 
-        if message.text == 'Ученикам' and id == i:
-            mess = bot.send_message(id, 'Ученикам какого класса вы хотите написать? Пожалуйста, пишите номер и букву класса слитно')
-            bot.register_next_step_handler(mess, clas)
+            if message.text == 'Гостям школы' and id == i:
+                to_whom = ('guest', 'none')
+                send_news(to_whom)
 
+            if message.text == 'Учителям' and id == i:
+                to_whom = ('teacher', 'none')
+                send_news(to_whom)
 
-        if message.text == 'Родителям' and id == i:
-            mess = bot.send_message(id, 'Родителям учеников какого класса вы хотите написать? Пожалуйста, пишите номер и букву класса слитно')
-            bot.register_next_step_handler(mess, clas_p)
+            if message.text == 'Всем...' and id == i:
+                bot.send_message(id, 'Пожалуйста, выберите кому вы хотите отправить сообщеине:', reply_markup=who_all())
 
-        if message.text == 'Гостям школы' and id == i:
-            to_whom = ('guest', 'none')
-            send_news(to_whom)
+            if message.text == 'Всем' and id == i:
+                to_whom = ('all', 'none')
+                send_news(to_whom)
 
-        if message.text == 'Учителям' and id == i:
-            to_whom =('teacher', 'none')
-            send_news(to_whom)
+            if message.text == 'Изменить расписание' and id == i:
+                bot.send_message(id, 'Пожалуйста, отправьте ТОЛЬКО изображение')
 
-        if message.text == 'Всем' and id == i:
-            to_whom = ('all', 'none')
-            send_news(to_whom)
+                @bot.message_handler(content_types=['photo'])
+                def get_schedule(message):
+                    fileID = message.photo[-1].file_id
+                    file_info = bot.get_file(fileID)
+                    downloaded_file = bot.download_file(file_info.file_path)
+
+                    with open("image.jpg", 'wb') as new_file:
+                        new_file.write(downloaded_file)
+
 
 
 def student():
@@ -106,14 +122,14 @@ def student():
     bot.register_next_step_handler(mes, class_st)
 
 def guest():
-    bot.send_message(id, 'Добро пожаловать в самую лучшую школу на свете!', reply_markup=button_reply_on())
+    bot.send_message(id, 'Добро пожаловать в самую лучшую школу на свете!', reply_markup=button_main())
     user = (id, 'guest', 'off', user_name, 'none')
     insert_base(user)
 
 def parent():
     bot.send_message(id, 'Добро пожаловать!')
     mes = bot.send_message(id, 'Пожалуйста, скажите: в каком классе обучается Ваш ребёнок. Например, <<5А>>')
-    bot.register_next_step_handler(mes, class_st)
+    bot.register_next_step_handler(mes, class_parent)
 
 
 def class_st(message):
@@ -133,7 +149,7 @@ def class_parent(message):
 def insert_base(user):
     cur.execute("INSERT OR IGNORE INTO user(userid, status, reply, user_name, clas) VALUES(?, ?, ?, ?, ?);", user)
     conn.commit()
-    bot.send_message(id, 'Спасибо! Желаете ли Вы подписаться на рассылку?', reply_markup=button_reply_on())
+    bot.send_message(id, 'Спасибо! Желаете ли Вы подписаться на рассылку?', reply_markup=button_main())
 
 def insert_base_teacher(user):
     cur.execute("INSERT OR IGNORE INTO user(userid, status, reply, user_name, clas) VALUES(?, ?, ?, ?, ?);", user)
@@ -144,7 +160,7 @@ def insert_base_teacher(user):
 
 
 def main_window():
-    bot.send_message(id, 'Выберите действие:', reply_markup=button_reply_on())
+    bot.send_message(id, 'Выберите действие:', reply_markup=button_main())
 
 
 
@@ -222,11 +238,11 @@ def reply(message, to_whom):
         for replys in data:
             if replys[3] == 'on':
                 if to_whom[0] == replys[1] and to_whom[1] == replys[4]:
-                    print(news)
                     bot.send_message(replys[0], f'Здравствуйте, {replys[2]}. Доступна новая новость')
                     bot.send_message(replys[0], news)
                 elif to_whom[0] == 'all':
-                    bot.send_message(replys[0], news)
+                    if to_whom[1] == replys[1]:
+                        bot.send_message(replys[0], news)
         bot.send_message(id, 'Сообщение успешно отправлено')
     except:
         bot.send_message(id, 'Возникла ошибка при отправке сообщения. Пожалуйста, свяжитесь с администратором')
