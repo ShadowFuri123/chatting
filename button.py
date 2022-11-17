@@ -10,18 +10,20 @@ def button_start():
     markup.add(btn1, btn2, btn3, btn4)
     return markup
 
-
 def button_main():
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn1 = types.KeyboardButton('Подписаться на рассылку')
     btn2 = types.KeyboardButton('Узнать расписание')
-    markup.add(btn1, btn2)
+    btn3 = types.KeyboardButton('Связь с разработчиком')
+    markup.add(btn1, btn2, btn3)
     return markup
 
 def button_reply_off():
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn1 = types.KeyboardButton('Отписаться от рассылки')
-    markup.add(btn1)
+    btn2 = types.KeyboardButton('Узнать расписание')
+    btn3 = types.KeyboardButton('Связь с разработчиком')
+    markup.add(btn1, btn2, btn3)
     return markup
 
 
@@ -29,7 +31,8 @@ def button_admin_start():
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn1 = types.KeyboardButton('Отправить новость')
     btn2 = types.KeyboardButton('Изменить расписание')
-    markup.add(btn1, btn2)
+    btn3 = types.KeyboardButton('Связь с разработчиком')
+    markup.add(btn1, btn2, btn3)
     return markup
 
 def button_return():

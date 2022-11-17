@@ -1,5 +1,5 @@
 import telebot
-from config import API, password
+from config import API, password, programmer
 from data_base import cur, conn
 from button import *
 
@@ -73,6 +73,10 @@ def work_with_text(message):
         if message.text == 'Узнать расписание':
             bot.send_photo(id, open('image.jpg', 'rb'))
 
+        if message.text == 'Связь с разработчиком':
+            mess = bot.send_message(id, 'Пожалуйста, задайте свой вопрос ОДНИМ сообщением')
+            bot.register_next_step_handler(mess, reply_with_prog)
+
         for i in teacher_id_from_data():
             if message.text == 'Отправить новость' and id == i:
                 to_whom_send_news()
@@ -107,13 +111,16 @@ def work_with_text(message):
 
                 @bot.message_handler(content_types=['photo'])
                 def get_schedule(message):
-                    fileID = message.photo[-1].file_id
-                    file_info = bot.get_file(fileID)
-                    downloaded_file = bot.download_file(file_info.file_path)
+                    try:
+                        fileID = message.photo[-1].file_id
+                        file_info = bot.get_file(fileID)
+                        downloaded_file = bot.download_file(file_info.file_path)
 
-                    with open("image.jpg", 'wb') as new_file:
-                        new_file.write(downloaded_file)
-
+                        with open("image.jpg", 'wb') as new_file:
+                            new_file.write(downloaded_file)
+                        bot.send_message(id, "Расписание успешно изменено")
+                    except:
+                        bot.send_message(id, "Возникла ошибка при изменении расписания. Пожалуйста, сообщите об этом разработчику")
 
 
 def student():
@@ -248,9 +255,10 @@ def reply(message, to_whom):
         bot.send_message(id, 'Возникла ошибка при отправке сообщения. Пожалуйста, свяжитесь с администратором')
 
 
-@bot.message_handler(commands=['stop'])
-def stop_bot():
-    bot.send_message(id, hi())
+def reply_with_prog(message):
+    bot.forward_message(programmer, id, message.message_id)
+    bot.send_message(id, 'Сообщение успешно отправлено.')
+
 
 bot.infinity_polling()
 #https://qna.habr.com/q/628376
