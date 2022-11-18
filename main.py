@@ -1,22 +1,23 @@
 import telebot
 from config import API, password, programmer
-from data_base import cur, conn
+from data_base import cur, conn, people, teachers, teacher_from_data, id_from_data
 from button import *
 
 
 bot = telebot.TeleBot(API)
 
-
+people_name = {}
 
 @bot.message_handler(commands=['start'])
 def hi(message):
     global user_name
     global id
 
+
     id = message.chat.id
     user_name = message.from_user.first_name
 
-    bot.send_message(message.chat.id, 'Здравствуйте, ' + user_name + '! Я - Фоксель!')
+    bot.send_message(message.chat.id, 'Здравствуйте, ' + f'<b><i>{user_name}</i></b>' + '! Я - Фоксель!', parse_mode='HTML')
     bot.send_photo(message.chat.id, open('Hi.png', 'rb'))
     bot.send_message(message.chat.id, 'Скажите, кто Вы:', reply_markup=button_start())
 
@@ -26,87 +27,107 @@ def return_to_who_are_you():
 
 @bot.message_handler(content_types=['text'])
 def work_with_text(message):
-        global id
-        id = message.chat.id
+        global teacher
+        global teacher_name
 
         if message.text == 'Ученик':
-            return student()
+            if id in id_from_data():
+                people_name = id_from_data()
+                welcome_back()
+            else:
+                student()
 
         if message.text == 'Гость':
-            guest()
+            if id in id_from_data():
+                people_name = id_from_data()
+                welcome_back()
+            else:
+                guest()
 
         if message.text == 'Родитель':
-            parent()
+            if id in id_from_data():
+                people_name = id_from_data()
+                welcome_back()
+            else:
+                parent()
 
         if message.text == 'Учитель':
-            teacher = False
-            for x in teacher_id_from_data():
-                if id == x:
-                    teacher = True
-
-            if teacher == True:
-                bot.send_message(id, 'С Возвращением!')
-                return_teacher()
+            if id in teacher_from_data():
+                teacher = teacher_from_data()
+                welcome_back()
             else:
-                mess = bot.send_message(id, 'Пожалуйста, введите пароль:', reply_markup=button_return())
+                mess = bot.send_message(message.chat.id, 'Пожалуйста, введите пароль:', reply_markup=button_return())
                 bot.register_next_step_handler(mess, parols)
 
         if message.text == 'Подписаться на рассылку':
             try:
                 cur.execute("UPDATE user set reply = ? where userid = ?", ('on', id))
                 conn.commit()
-                bot.send_message(id, 'Вы успешно подписались на рассылку', reply_markup=button_reply_off())
+                bot.send_message(message.chat.id, 'Вы успешно подписались на рассылку', reply_markup=button_reply_off())
             except:
-                bot.send_message(id, 'Вы уже подписаны на рассылку или возникла ошибка')
+                bot.send_message(message.chat.id, 'Вы уже подписаны на рассылку или возникла ошибка')
 
         if message.text == 'Отписаться от рассылки':
             try:
                 cur.execute("UPDATE user set reply = ? where userid = ?", ('off', id))
                 conn.commit()
-                bot.send_message(id, ' Вы успешно отписались от рассылки', reply_markup=button_reply_off())
+                bot.send_message(message.chat.id, ' Вы успешно отписались от рассылки', reply_markup=button_reply_off())
             except:
-                bot.send_message(id, 'Возникла ошибка при отписке')
+                bot.send_message(message.chat.id, 'Возникла ошибка при отписке')
 
-        if message.text == 'Назад':
-            main_window()
 
-        if message.text == 'Узнать расписание':
-            bot.send_photo(id, open('image.jpg', 'rb'))
+        if message.text == 'Узнать расписание' :
+            bot.send_photo(message.chat.id, open('image.jpg', 'rb'))
 
         if message.text == 'Связь с разработчиком':
-            mess = bot.send_message(id, 'Пожалуйста, задайте свой вопрос ОДНИМ сообщением')
+            mess = bot.send_message(message.chat.id, 'Пожалуйста, задайте свой вопрос ОДНИМ сообщением')
             bot.register_next_step_handler(mess, reply_with_prog)
 
-        for i in teacher_id_from_data():
-            if message.text == 'Отправить новость' and id == i:
+
+
+
+        if id in teacher_from_data():
+            teacher = True
+
+
+            if message.text == 'Отправить новость':
                 to_whom_send_news()
 
-            if message.text == 'Ученикам' and id == i:
-                mess = bot.send_message(id,
-                                        'Ученикам какого класса вы хотите написать? Пожалуйста, пишите номер и букву класса слитно')
+            if message.text == 'Ученикам':
+                mess = bot.send_message(message.chat.id, 'Ученикам какого класса вы хотите написать? Пожалуйста, пишите номер и букву класса слитно')
                 bot.register_next_step_handler(mess, clas)
 
-            if message.text == 'Родителям' and id == i:
-                mess = bot.send_message(id,
-                                        'Родителям учеников какого класса вы хотите написать? Пожалуйста, пишите номер и букву класса слитно')
+            if message.text == 'Родителям':
+                mess = bot.send_message(message.chat.id, 'Родителям учеников какого класса вы хотите написать? Пожалуйста, пишите номер и букву класса слитно')
                 bot.register_next_step_handler(mess, clas_p)
 
-            if message.text == 'Гостям школы' and id == i:
+            if message.text == 'Гостям школы':
                 to_whom = ('guest', 'none')
                 send_news(to_whom)
 
-            if message.text == 'Учителям' and id == i:
+            if message.text == 'Учителям':
                 to_whom = ('teacher', 'none')
                 send_news(to_whom)
 
-            if message.text == 'Всем...' and id == i:
-                bot.send_message(id, 'Пожалуйста, выберите кому вы хотите отправить сообщеине:', reply_markup=who_all())
+            if message.text == 'Всем...':
+                bot.send_message(id, 'Пожалуйста, выберите кому вы хотите отправить сообщеине:', reply_markup=button_who_all())
 
-            if message.text == 'Всем' and id == i:
+            if message.text == 'Всем':
                 to_whom = ('all', 'none')
                 send_news(to_whom)
 
-            if message.text == 'Изменить расписание' and id == i:
+            if message.text == 'Выбрать категорию':
+                bot.send_message(id, 'Пожалуйста, выберите кому вы хотите отправить сообщение:', reply_markup=button_categories())
+
+            if message.text == 'Родителям.':
+                to_whom = ('all', 'parent')
+                send_news(to_whom)
+
+            if message.text == 'Ученикам.':
+                to_whom = ('all', 'student')
+                send_news(to_whom)
+
+            if message.text == 'Изменить расписание' and message.text != 'Назад':
                 bot.send_message(id, 'Пожалуйста, отправьте ТОЛЬКО изображение')
 
                 @bot.message_handler(content_types=['photo'])
@@ -118,10 +139,19 @@ def work_with_text(message):
 
                         with open("image.jpg", 'wb') as new_file:
                             new_file.write(downloaded_file)
-                        bot.send_message(id, "Расписание успешно изменено")
+                        bot.send_message(message.chat.id, "Расписание успешно изменено")
                     except:
-                        bot.send_message(id, "Возникла ошибка при изменении расписания. Пожалуйста, сообщите об этом разработчику")
+                        bot.send_message(message.chat.id, "Возникла ошибка при изменении расписания. Пожалуйста, сообщите об этом разработчику")
 
+        if message.text == 'Назад':
+            returning(teacher)
+
+
+def returning(teacher):
+    if teacher == True:
+        bot.send_message(id, 'Пожалуйста, выберите действие:', reply_markup=button_admin_start())
+    else:
+        main_window()
 
 def student():
     bot.send_message(id, 'Добро пожаловать!')
@@ -163,7 +193,12 @@ def insert_base_teacher(user):
     conn.commit()
 
 
-
+def welcome_back():
+    if id in id_from_data():
+        people_name = people[id]
+        bot.send_message(id, f'С возвращением, <b>{people_name}</b>! Пожалуйста, выберите действие:', reply_markup=button_main(), parse_mode='HTML')
+    elif id in teachers:
+        bot.send_message(id, f'С возвращением, <b>{teachers[id]}</b>! Пожалуйста, выберите действие:', reply_markup=button_admin_start(), parse_mode='HTML')
 
 
 def main_window():
@@ -195,30 +230,13 @@ def name_user(message):
 
 def administrator(user_names):
     global teacher_id
-    teacher_id = teacher_id_from_data()
+    teacher_id = id_from_data()
     bot.send_message(id, '__Выберете действие__:', parse_mode="Markdown", reply_markup=button_admin_start())
     user = (id, 'teacher', 'off', user_names, 'none')
     insert_base_teacher(user)
 
-def return_teacher():
-    bot.send_message(id, 'Выберете действие:', reply_markup=button_admin_start())
-
-
-def teacher_id_from_data():
-    cur.execute("""SELECT userid, status FROM user""")
-    data = cur.fetchall()
-    conn.commit()
-    teacher_id1 = []
-    for name in data:
-        if name[1] == 'teacher':
-            teacher_id1.append(name[0])
-    return teacher_id1
-
-
-
-
 def to_whom_send_news():
-    bot.send_message(id, 'Выберете, кому Вы хотите отправить новость:', reply_markup=who_reply())
+    bot.send_message(id, 'Выберете, кому Вы хотите отправить новость:', reply_markup=button_who_reply())
 
 def clas(message):
     classer = message.text
@@ -236,29 +254,36 @@ def send_news(to_whom):
     bot.register_next_step_handler(reply_message, reply, to_whom)
 
 def reply(message, to_whom):
-    sqlite_select_query = """SELECT userid, status, user_name, reply, clas from user """
-    cur.execute(sqlite_select_query)
-    data = cur.fetchall()
-    conn.commit()
-    news = message.text
-    try:
-        for replys in data:
-            if replys[3] == 'on':
-                if to_whom[0] == replys[1] and to_whom[1] == replys[4]:
-                    bot.send_message(replys[0], f'Здравствуйте, {replys[2]}. Доступна новая новость')
-                    bot.send_message(replys[0], news)
-                elif to_whom[0] == 'all':
-                    if to_whom[1] == replys[1]:
-                        bot.send_message(replys[0], news)
-        bot.send_message(id, 'Сообщение успешно отправлено')
-    except:
-        bot.send_message(id, 'Возникла ошибка при отправке сообщения. Пожалуйста, свяжитесь с администратором')
+    if message != 'Назад':
+        sqlite_select_query = """SELECT userid, status, user_name, reply, clas from user """
+        cur.execute(sqlite_select_query)
+        data = cur.fetchall()
+        conn.commit()
+        news = message.text
+        try:
+            for replys in data:
+                if replys[3] == 'on':
+                    if to_whom[0] == replys[1] and to_whom[1] == replys[4]:
+                        bot.send_message(replys[0], f'Здравствуйте, {replys[2]}. Доступна новая новость')
+                        bot.send_message(replys[0], f'<i><b>{teacher_name}</b></i>: \n' + news, parse_mode='HTML')
+                    elif to_whom[0] == 'all' and to_whom[1] == 'none':
+                        bot.send_message(replys[0], f'Здравствуйте, {replys[2]}. Доступна новая новость')
+                        bot.send_message(replys[0], f'<i><b>{teacher_name}</b></i>: \n' + news, parse_mode='HTML')
+                    elif to_whom[0] == 'all' and to_whom[1] != 'none':
+                            if to_whom[1] == replys[1]:
+                                bot.send_message(replys[0], f'Здравствуйте, {replys[2]}. Доступна новая новость')
+                                bot.send_message(replys[0], f'<i><b>{teacher_name}</b></i>: \n' + news,parse_mode='HTML')
+
+            bot.send_message(id, 'Сообщение успешно отправлено')
+        except:
+            bot.send_message(id, 'Возникла ошибка при отправке сообщения. Пожалуйста, свяжитесь с администратором')
 
 
 def reply_with_prog(message):
-    bot.forward_message(programmer, id, message.message_id)
-    bot.send_message(id, 'Сообщение успешно отправлено.')
-
+    if message.text != 'Назад':
+        bot.forward_message(programmer, id, message.message_id)
+        bot.send_message(id, 'Сообщение успешно отправлено.')
+    else:
+        returning(teacher)
 
 bot.infinity_polling()
-#https://qna.habr.com/q/628376

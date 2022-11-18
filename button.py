@@ -41,7 +41,7 @@ def button_return():
     markup.add(btn1)
     return markup
 
-def who_reply():
+def button_who_reply():
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn1 = types.KeyboardButton('Гостям школы')
     btn2 = types.KeyboardButton('Ученикам')
@@ -52,7 +52,7 @@ def who_reply():
     markup.add(btn1, btn2, btn3, btn4, btn5, btn6)
     return markup
 
-def who_all():
+def button_who():
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn1 = types.KeyboardButton('Гостям школы')
     btn2 = types.KeyboardButton('Ученикам')
@@ -61,4 +61,19 @@ def who_all():
     btn5 = types.KeyboardButton('Всем')
     btn6 = types.KeyboardButton('Назад')
     markup.add(btn1, btn2, btn3, btn4, btn5, btn6)
+    return markup
+
+def button_who_all():
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    btn1 = types.KeyboardButton('Всем')
+    btn2 = types.KeyboardButton('Выбрать категорию')
+    markup.add(btn1, btn2)
+    return markup
+
+def button_categories():
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    btn1 = types.KeyboardButton('Ученикам.')
+    btn2 = types.KeyboardButton('Родителям.')
+    btn3 = types.KeyboardButton('Назад')
+    markup.add(btn1, btn2, btn3)
     return markup
